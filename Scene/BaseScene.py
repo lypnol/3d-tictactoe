@@ -1,7 +1,7 @@
 from vpython import *
 
 
-WIDTH, HEIGHT = 600, 600
+WIDTH, HEIGHT = 580, 700
 
 class BaseScene:
     def __init__(self):

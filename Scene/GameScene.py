@@ -12,12 +12,18 @@ class GameScene(BaseScene):
     def __init__(self, n, x_color, o_color):
         BaseScene.__init__(self)
         self.n = n
+        # couleurs
         self.x_color = hex_to_color_vector(x_color)
         self.o_color = hex_to_color_vector(o_color)
         self.current_color = self.x_color
-        self.on_select = None
-        self.curve = None
+        # click event
         self.scene.bind('click', self.on_click)
+        # objets
+        self.boxes = {}
+        self.selected = set()
+        self.curve = None
+        # external events handlers
+        self._on_select = None
 
     def box_id_to_pos(self, box_id):
         n = self.n
@@ -27,8 +33,6 @@ class GameScene(BaseScene):
 
     def init_objects(self):
         n = self.n
-        self.boxes = {}
-        self.selected = set()
         for box_id in itertools.product([i for i in range(n)], repeat=3):
             self.boxes[box_id] = box(
                 pos=self.box_id_to_pos(box_id),
@@ -40,14 +44,10 @@ class GameScene(BaseScene):
         if self.curve is None:
             self.curve = curve([self.boxes[box_id].pos for box_id in link], color=self.current_color)
 
-    def game_over(self, state):
-        (result, points) = state
+    def game_over(self, end_data):
+        (result, points) = end_data
         # TODO Ce qu'on fait quand la partie est terminée
-        # state: est ce qui est retourné par TicTacToe.check_end_game quand result est different de None
-        pass
-
-    def set_on_select(self, on_select):
-        self.on_select = on_select
+        # end_data: est ce qui est retourné par TicTacToe.check_end_game quand result est different de None
 
     def switch_colors(self):
         if self.current_color == self.o_color:
@@ -57,11 +57,11 @@ class GameScene(BaseScene):
 
     def on_click(self, evt):
         obj = self.scene.mouse.pick
-        for (x, y, z), box in self.boxes.items():
-            if obj == box and (x, y, z) not in self.selected:
+        for box_id, box in self.boxes.items():
+            if obj == box and box_id not in self.selected:
                 box.color = self.current_color
-                self.selected.add((x, y, z))
-                self.on_select((x, y, z))
+                self.selected.add(box_id)
+                if self.on_select is not None: self.on_select(box_id)
                 break
 
     def select_box(self, box_id):
@@ -71,3 +71,16 @@ class GameScene(BaseScene):
         box = self.boxes[(x, y, z)]
         box.color = self.current_color
         self.selected.add((x, y, z))
+
+    def _get_on_select(self):
+        return self._on_select
+    def _set_on_select(self, on_select):
+        self._on_select = on_select
+
+    def _get_on_restart(self):
+        return self._on_restart
+    def _set_on_restart(self, on_restart):
+        self._on_restart = on_restart
+
+    on_select = property(_get_on_select, _set_on_select)
+    on_restart = property(_get_on_restart, _set_on_restart)

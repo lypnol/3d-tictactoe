@@ -5,7 +5,7 @@ class TicTacToe:
     def __init__(self, game_scene, n, current_player='x'):
         self.grid = [[[None for z in range(n)] for y in range(n)] for x in range(n)]
         self.game_scene = game_scene
-        self.game_scene.set_on_select(self.on_select)
+        self.game_scene.on_select = self.on_select
         self.current_player = current_player
 
     def check_end_game(self):
@@ -38,6 +38,6 @@ class TicTacToe:
         result, points = self.check_end_game()
         if result is not None:
             print('Match ended: ', result, points)
-            self.game_scene.game_over((result, points))
+            self.game_scene.game_over((result, points), self.restart)
         else:
             self.switch_player()

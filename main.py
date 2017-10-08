@@ -9,7 +9,6 @@ X_COLOR = 'e8c02c'
 O_COLOR = '5fa0ba'
 N = 3
 
-
 def main():
     start_scene = StartScene()
     start_scene.show()
