@@ -1,4 +1,5 @@
 import itertools
+import sys
 
 from Scene.StartScene import StartScene
 from Scene.GameScene import GameScene
@@ -10,8 +11,8 @@ X_COLOR = 'e8c02c'
 O_COLOR = '5fa0ba'
 N = 3
 
-SERVER_ADDR = 'localhost'
-SERVER_PORT = 8080
+SERVER_ADDR = 'localhost' if len(sys.argv) < 2 else str(sys.argv[1])
+SERVER_PORT = 8080 if len(sys.argv) < 3 else int(sys.argv[2])
 
 def main():
     remote_socket = None

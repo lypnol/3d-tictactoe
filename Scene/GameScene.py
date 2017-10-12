@@ -21,7 +21,7 @@ class GameScene(BaseScene):
         self.disable_actions = False
         # objets
         self.boxes = {}
-        self.label_waiting_for_game = None
+        self.title = None
         self.selected = set()
         self.curve = None
         # external events handlers
@@ -35,27 +35,24 @@ class GameScene(BaseScene):
 
     def wait_for_opponent(self):
         self.disable_actions = True
-        self.label_waiting_for_game.visible = True
+        self.title.text = 'Waiting for opponent...'
+        self.title.visible = True
 
     def component_is_ready(self):
         self.disable_actions = False
-        self.label_waiting_for_game.visible = False
+        self.title.text = 'Your turn'
+        self.title.color = self.x_color
+        self.title.visible = True
 
     def init_objects(self):
         n = self.n
-        self.label_waiting_for_game = label(pos=vector(0, 0, 0), xoffset=0, yoffset=0, text='Waiting for opponent...', color=color.white, opacity=0, line=False, height=30, box=False)
-        self.label_waiting_for_game.visible = False
+        self.title = label(pos=vector(0, 20, 0), xoffset=0, yoffset=0, text='Waiting for opponent...', align='center', color=color.white, opacity=0, line=False, height=25, box=False)
         for box_id in itertools.product([i for i in range(n)], repeat=3):
             self.boxes[box_id] = box(
                 pos=self.box_id_to_pos(box_id),
                 color=color.white,
                 length=self.BOX_SIZE, height=self.BOX_SIZE, width=self.BOX_SIZE)
-        self.title_your_turn = text(pos=vector(0, 20, 0), text='Your turn', align='center', color=color.blue, billboard=True, depth=0.01, emissive=True)
-        self.title_wait = text(pos=vector(0, 20, 0), text='Wait for the player', align='center', color=color.red, billboard=True,
-                               depth=0.01, emissive=True)
-        self.title_wait.visible = False
-
-        return [self.label_waiting_for_game, title_your_turn, title_wait] + list(self.boxes.values())
+        return [self.title] + list(self.boxes.values())
 
     def draw_link(self, link):
         if self.curve is None:
@@ -69,12 +66,11 @@ class GameScene(BaseScene):
     def switch_colors(self):
         if self.current_color == self.o_color:
             self.current_color = self.x_color
-            self.title_wait.visible = False
-            self.title_your_turn.visible = True
+            self.title.text = 'Your turn'
         else:
             self.current_color = self.o_color
-            self.title_your_turn.visible = False
-            self.title_wait.visible = True
+            self.title.text = 'Opponent turn'
+        self.title.color = self.current_color
 
     def on_click(self, evt):
         obj = self.scene.mouse.pick

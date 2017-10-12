@@ -82,7 +82,7 @@ class Queue:
 
     def pushpop2(self, e):
         with self.lock:
-            self.queue.append(e)
+            self.queue.appendleft(e)
             if len(self.queue) >= 2:
                 return (self.queue.pop(), self.queue.pop())
             return None, None

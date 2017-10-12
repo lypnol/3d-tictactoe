@@ -15,9 +15,11 @@ class TicTacToe:
             self.remote_socket.on_recv_move = self.on_recv_move
             self.remote_socket.on_start_game = self.on_start_game
 
-        if self.game_type == 'remote':
+        if self.game_type == 'remote' and self.game_scene and self.remote_socket:
             self.game_scene.wait_for_opponent()
             self.remote_socket.find_game()
+        elif self.game_type == 'local' and self.game_scene:
+            self.game_scene.component_is_ready()
 
         self.current_player = current_player
 
@@ -74,7 +76,7 @@ class TicTacToe:
 
     def on_select(self, box_id):
         res = self.on_recv_move(box_id, change_color=False)
-        if self.game_scene:
+        if self.game_scene and self.game_type == 'remote':
             self.game_scene.disable_actions = True
         if self.remote_socket:
             self.remote_socket.send_move(box_id)
