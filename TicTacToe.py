@@ -2,10 +2,23 @@ import itertools
 
 
 class TicTacToe:
-    def __init__(self, game_scene, n, current_player='x'):
+    def __init__(self, n, game_type='local', current_player='x', remote_socket=None, game_scene=None):
         self.grid = [[[None for z in range(n)] for y in range(n)] for x in range(n)]
+        self.game_type = game_type
+
         self.game_scene = game_scene
-        self.game_scene.on_select = self.on_select
+        if self.game_scene:
+            self.game_scene.on_select = self.on_select
+
+        self.remote_socket = remote_socket
+        if self.remote_socket and game_type == 'remote':
+            self.remote_socket.on_recv_move = self.on_recv_move
+            self.remote_socket.on_start_game = self.on_start_game
+
+        if self.game_type == 'remote':
+            self.game_scene.wait_for_opponent()
+            self.remote_socket.find_game()
+
         self.current_player = current_player
 
     def check_end_game(self):
@@ -29,15 +42,41 @@ class TicTacToe:
             self.current_player = 'o'
         else:
             self.current_player = 'x'
-        self.game_scene.switch_colors()
+        if self.game_scene:
+            self.game_scene.switch_colors()
 
-    def on_select(self, box_id):
+    def on_start_game(self, current_player):
+        print("Started game as {}".format(current_player))
+        self.current_player = current_player
+        if self.game_scene:
+            self.game_scene.component_is_ready()
+            if self.current_player == 'o':
+                self.game_scene.disable_actions = True
+                self.game_scene.switch_colors()
+
+    def on_recv_move(self, box_id, change_color=True):
+        if change_color:
+            print("Received move {}".format(box_id))
+        else:
+            print("Selected move {}".format(box_id))
         x, y, z = box_id
-        print('Player', self.current_player, ':', box_id)
         self.grid[x][y][z] = self.current_player
         result, points = self.check_end_game()
+        if self.game_scene and change_color:
+            self.game_scene.select_box(box_id)
+            self.game_scene.disable_actions = False
         if result is not None:
-            print('Match ended: ', result, points)
-            self.game_scene.game_over((result, points), self.restart)
+            if self.game_scene:
+                self.game_scene.game_over((result, points), self.restart)
+            return result, points
         else:
             self.switch_player()
+
+    def on_select(self, box_id):
+        res = self.on_recv_move(box_id, change_color=False)
+        if self.game_scene:
+            self.game_scene.disable_actions = True
+        if self.remote_socket:
+            self.remote_socket.send_move(box_id)
+            # TODO wait for other player
+        return res

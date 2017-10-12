@@ -2,6 +2,7 @@ import itertools
 
 from Scene.StartScene import StartScene
 from Scene.GameScene import GameScene
+from RemoteSocket import RemoteSocket
 from TicTacToe import TicTacToe
 
 
@@ -9,15 +10,25 @@ X_COLOR = 'e8c02c'
 O_COLOR = '5fa0ba'
 N = 3
 
+SERVER_ADDR = 'localhost'
+SERVER_PORT = 8080
+
 def main():
-    start_scene = StartScene()
+    remote_socket = None
+    try:
+        remote_socket = RemoteSocket(SERVER_ADDR, SERVER_PORT)
+        remote_socket.start()
+    except ConnectionRefusedError:
+        pass
+
+    start_scene = StartScene(remote=(True if remote_socket is not None else False))
     start_scene.show()
-    start_scene.wait_for_start()
+    game_type = start_scene.wait_for_start()
     start_scene.hide()
 
     game_scene = GameScene(N, X_COLOR, O_COLOR)
-    tictactoe = TicTacToe(game_scene, N)
     game_scene.show()
+    tictactoe = TicTacToe(N, game_type=game_type, remote_socket=remote_socket, game_scene=game_scene)
 
 if __name__ == '__main__':
     main()

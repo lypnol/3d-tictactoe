@@ -18,8 +18,10 @@ class GameScene(BaseScene):
         self.current_color = self.x_color
         # click event
         self.scene.bind('click', self.on_click)
+        self.disable_actions = False
         # objets
         self.boxes = {}
+        self.label_waiting_for_game = None
         self.selected = set()
         self.curve = None
         # external events handlers
@@ -31,14 +33,24 @@ class GameScene(BaseScene):
         x, y, z = map(lambda i: i * self.SPACING + pos_min, box_id)
         return vector(x, y, z)
 
+    def wait_for_opponent(self):
+        self.disable_actions = True
+        self.label_waiting_for_game.visible = True
+
+    def component_is_ready(self):
+        self.disable_actions = False
+        self.label_waiting_for_game.visible = False
+
     def init_objects(self):
         n = self.n
+        self.label_waiting_for_game = label(pos=vector(0, 0, 0), xoffset=0, yoffset=0, text='Waiting for opponent...', color=color.white, opacity=0, line=False, height=30, box=False)
+        self.label_waiting_for_game.visible = False
         for box_id in itertools.product([i for i in range(n)], repeat=3):
             self.boxes[box_id] = box(
                 pos=self.box_id_to_pos(box_id),
                 color=color.white,
                 length=self.BOX_SIZE, height=self.BOX_SIZE, width=self.BOX_SIZE)
-        return self.boxes.values()
+        return [self.label_waiting_for_game] + list(self.boxes.values())
 
     def draw_link(self, link):
         if self.curve is None:
@@ -57,12 +69,13 @@ class GameScene(BaseScene):
 
     def on_click(self, evt):
         obj = self.scene.mouse.pick
-        for box_id, box in self.boxes.items():
-            if obj == box and box_id not in self.selected:
-                box.color = self.current_color
-                self.selected.add(box_id)
-                if self.on_select is not None: self.on_select(box_id)
-                break
+        if not self.disable_actions:
+            for box_id, box in self.boxes.items():
+                if obj == box and box_id not in self.selected:
+                    box.color = self.current_color
+                    self.selected.add(box_id)
+                    if self.on_select is not None: self.on_select(box_id)
+                    break
 
     def select_box(self, box_id):
         x, y, z = box_id
