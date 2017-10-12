@@ -65,9 +65,8 @@ class ConnectionHandler(Thread):
             cmd, data = parts[0], parts[1:]
             if cmd == b's':
                 self.server.game_request(self)
-            elif cmd == b'm' and self.opponent:
+            elif cmd == b'm' and self.opponent and self.game.current_player == self.player_symbol:
                 self.game.on_select(data)
-                self.game.switch_player()
                 concurrent_print("Player %s move %s" % (self, data))
                 self.opponent.send_move(data)
 
