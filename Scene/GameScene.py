@@ -50,7 +50,12 @@ class GameScene(BaseScene):
                 pos=self.box_id_to_pos(box_id),
                 color=color.white,
                 length=self.BOX_SIZE, height=self.BOX_SIZE, width=self.BOX_SIZE)
-        return [self.label_waiting_for_game] + list(self.boxes.values())
+        self.title_your_turn = text(pos=vector(0, 20, 0), text='Your turn', align='center', color=color.blue, billboard=True, depth=0.01, emissive=True)
+        self.title_wait = text(pos=vector(0, 20, 0), text='Wait for the player', align='center', color=color.red, billboard=True,
+                               depth=0.01, emissive=True)
+        self.title_wait.visible = False
+
+        return [self.label_waiting_for_game, title_your_turn, title_wait] + list(self.boxes.values())
 
     def draw_link(self, link):
         if self.curve is None:
@@ -64,8 +69,12 @@ class GameScene(BaseScene):
     def switch_colors(self):
         if self.current_color == self.o_color:
             self.current_color = self.x_color
+            self.title_wait.visible = False
+            self.title_your_turn.visible = True
         else:
             self.current_color = self.o_color
+            self.title_your_turn.visible = False
+            self.title_wait.visible = True
 
     def on_click(self, evt):
         obj = self.scene.mouse.pick
