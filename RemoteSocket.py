@@ -34,7 +34,7 @@ class RemoteSocket(Thread):
             if cmd == b's' and self.on_start_game:
                 self.on_start_game('x' if data[0] == 1 else 'o')
             if cmd == b'e' and self.on_end_game:
-                self.on_end_game('x' if data[0] == 1 else 'o')
+                self.on_end_game(data[0])
 
     def close(self):
         self._closed = True
