@@ -33,6 +33,8 @@ class TicTacToe:
         for x in range(n):
             for y in range(n):
                 for z in range(n):
+                    if g[x][y][z] is None:
+                        continue
                     neighbors = getNeighbor(g,x,y,z)
                     #for item in neighbors:
                     #neighbors[0] est le 1er voisin de la liste
@@ -42,8 +44,8 @@ class TicTacToe:
                             for otherNeighbor in neighbors[1:]:
                                 if otherNeighbor[0] == g[x][y][z] \
                                 and isParallel(getVector(neighbors[0][1],(x,y,z)), getVector(otherNeighbor[1],(x,y,z))):
-                                    return ("It's a win", [x,y,z], neighbors[0][1], otherNeighbor[1])
-                            neighbors.pop(0)
+                                    return g[x][y][z], ([x,y,z], neighbors[0][1], otherNeighbor[1])
+                        neighbors.pop(0)
         return None
 
 
@@ -68,12 +70,10 @@ class TicTacToe:
     def _apply_move(self, box_id):
         x, y, z = box_id
         self.grid[x][y][z] = self.current_player
-        if self.game_scene:
-            self.game_scene.select_box(box_id)
-            self.game_scene.disable_actions = False
         match_ended = self.check_end_game()
-        if match_ended: return match_ended
+        if match_ended is not None: return match_ended
         self.switch_player()
+        return None
 
     def on_start_game(self, current_player):
         print("Started game as {}".format(current_player))
@@ -85,13 +85,16 @@ class TicTacToe:
                 self.game_scene.switch_colors()
 
     def on_recv_move(self, box_id, debug=True):
-        if debug: print("Opponent move {}".format(box_id))
+        if debug: print("Player {} move {}".format(self.current_player, box_id))
+        if self.game_scene:
+            self.game_scene.select_box(box_id)
+            self.game_scene.disable_actions = False
         match_ended = self._apply_move(box_id)
         if match_ended and self.game_scene:
             self.game_scene.game_over(match_ended)
 
     def on_select(self, box_id, debug=True):
-        if debug: print("Selected move {}".format(box_id))
+        if debug: print("Player {} move {}".format(self.current_player, box_id))
         match_ended = self._apply_move(box_id)
         if self.game_type == 'remote' and self.game_scene and self.remote_socket:
             self.game_scene.disable_actions = True
