@@ -83,8 +83,14 @@ class GameScene(BaseScene):
             self.title.color = white.color
         else:
             self.title.text = 'Player wins'
-        # TODO Ce qu'on fait quand la partie est terminée
-        # end_data: est ce qui est retourné par TicTacToe.check_end_game quand result est different de None
+            # TODO Ce qu'on fait quand la partie est terminée
+            # end_data: est ce qui est retourné par TicTacToe.check_end_game quand result est different de None
+            box1 = self.boxes[tuple(points[0])].pos
+            box2 = self.boxes[tuple(points[1])].pos
+            box3 = self.boxes[tuple(points[2])].pos
+            c = curve(box1, box2, box3, color=self.current_color)
+            #c.append(box2, box3)
+
         self.show_restart()
 
     def show_restart(self):
