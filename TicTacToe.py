@@ -102,6 +102,7 @@ class TicTacToe:
         elif self.game_type == 'local' and self.game_scene and match_ended:
             if debug: print("Match ended {} {}".format(*match_ended))
             self.game_scene.game_over(match_ended)
+            self.game_scene.disable_actions = True
         return match_ended
 
     def on_opponent_left(self):
