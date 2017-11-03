@@ -27,7 +27,9 @@ class RemoteSocket(Thread):
 
     def run(self):
         while not self._closed:
-            parts = struct.unpack(DATA_FORMAT, self.socket.recv(struct.calcsize(DATA_FORMAT)))
+            test = self.socket.recv(struct.calcsize(DATA_FORMAT))
+            print(test)
+            parts = struct.unpack(DATA_FORMAT, test)
             cmd, data = parts[0], parts[1:]
             if cmd == b'm' and self.on_recv_move:
                 self.on_recv_move(data)
