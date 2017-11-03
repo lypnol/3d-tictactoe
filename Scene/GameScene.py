@@ -12,7 +12,7 @@ class GameScene(BaseScene):
     def __init__(self, n, x_color, o_color):
         BaseScene.__init__(self)
         self.n = n
-        # couleurs
+        # color conversion to vector
         self.x_color = hex_to_color_vector(x_color)
         self.o_color = hex_to_color_vector(o_color)
         self.current_color = self.x_color
@@ -33,6 +33,7 @@ class GameScene(BaseScene):
         self._on_restart = None
 
     def box_id_to_pos(self, box_id):
+        """returns the position in space of a cube, given its id"""
         n = self.n
         pos_min = -(n-1) * self.SPACING / 2
         x, y, z = map(lambda i: i * self.SPACING + pos_min, box_id)
@@ -45,7 +46,7 @@ class GameScene(BaseScene):
         self.title.text = 'Waiting for opponent...'
         self.title.visible = True
 
-    def component_is_ready(self):
+    def opponent_is_ready(self):
         self.hide_restart()
         self.disable_actions = False
         self.title.text = 'Your turn'
@@ -72,9 +73,9 @@ class GameScene(BaseScene):
             box.color = color.white
         if self.on_restart: self.on_restart(game_type)
 
-    def draw_link(self, link):
-        if self.curve is None:
-            self.curve = curve([self.boxes[box_id].pos for box_id in link], color=self.current_color)
+    #def draw_link(self, link):
+    #    if self.curve is None:
+    #        self.curve = curve([self.boxes[box_id].pos for box_id in link], color=self.current_color)
 
     def game_over(self, end_data):
         result, points = end_data
@@ -83,14 +84,14 @@ class GameScene(BaseScene):
             self.title.color = white.color
         else:
             self.title.text = 'Player wins'
-            # TODO Ce qu'on fait quand la partie est terminée
-            # end_data: est ce qui est retourné par TicTacToe.check_end_game quand result est different de None
-            box1 = self.boxes[tuple(points[0])].pos
-            box2 = self.boxes[tuple(points[1])].pos
-            box3 = self.boxes[tuple(points[2])].pos
-            c = curve(box1, box2, box3, color=self.current_color)
-            #c.append(box2, box3)
-
+            #get the positions of the 3 winning boxes
+            pos_box1 = self.boxes[tuple(points[0])].pos
+            pos_box2 = self.boxes[tuple(points[1])].pos
+            pos_box3 = self.boxes[tuple(points[2])].pos
+            #draw a line between those 3 boxes
+            self.curve = curve(box1, box2, box3, color=self.current_color)
+            #the player cannot interact with the cubes when the game is over
+            self.disable_actions = True
         self.show_restart()
 
     def show_restart(self):
@@ -106,6 +107,7 @@ class GameScene(BaseScene):
         self.restart_label_remote.visible = False
 
     def on_opponent_left(self):
+        """handle the event of the opponent's disconnection"""
         self.title.color = color.red
         self.title.text = 'Opponent left'
         self.disable_actions = True
@@ -134,6 +136,7 @@ class GameScene(BaseScene):
                 self.restart('local')
             elif obj == self.restart_button_remote:
                 self.restart('remote')
+            self.curve.clear()
 
     def select_box(self, box_id):
         x, y, z = box_id
