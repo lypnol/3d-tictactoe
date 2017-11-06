@@ -55,7 +55,7 @@ class ConnectionHandler(Thread):
     def send_move(self, data):
         self.conn.send(struct.pack(DATA_FORMAT, b'm', *data))
 
-    def end_game(self, data):
+    def end_game(self):
         self.game = None
         self.opponent = None
 
@@ -72,12 +72,16 @@ class ConnectionHandler(Thread):
                     match_ended = self.game.on_select(data, debug=False)
                     self.opponent.send_move(data)
                     if match_ended:
+                        concurrent_print("Mach %s %s ended %s" % (self, self.opponent, match_ended[0]))
+                        self.opponent.end_game()
                         self.end_game()
-        except:
+
+        except Exception as e:
+            concurrent_print("Closing connection %s" % e)
             self.close()
 
     def in_game(self):
-        return not self._closed and self.game is not None and self.opponent is not None
+        return (not self._closed) and (self.game is not None) and (self.opponent is not None)
 
     def close(self):
         self._closed = True
@@ -91,20 +95,28 @@ class ConnectionHandler(Thread):
 
 class Queue:
     def __init__(self):
+        self.elements = set()
         self.queue = deque()
         self.lock = RLock()
 
     def pushpop2(self, e):
         with self.lock:
+            if e in self.elements:
+                return None, None
             self.queue.appendleft(e)
+            self.elements.add(e)
             if len(self.queue) >= 2:
-                return (self.queue.pop(), self.queue.pop())
+                e1, e2 = self.queue.pop(), self.queue.pop()
+                self.elements.remove(e1)
+                self.elements.remove(e2)
+                return e1, e2
             return None, None
 
     def remove(self, e):
         with self.lock:
             try:
                 self.queue.remove(e)
+                self.elements.remove(e)
             except ValueError: pass
 
 class Server:

@@ -1,10 +1,11 @@
 import itertools
-from Scene.utils import getNeighbor, isParallel, getVector
+from geometry import getNeighbor, isParallel, getVector
 
 class TicTacToe:
     def __init__(self, n, game_type='local', current_player='x', remote_socket=None, game_scene=None):
         self.n = n
         self.game_scene = game_scene
+        self.current_player = current_player
         if self.game_scene:
             self.game_scene.on_select = self.on_select
             self.game_scene.on_restart = self.reset
@@ -25,39 +26,27 @@ class TicTacToe:
             self.remote_socket.find_game()
         elif self.game_type == 'local' and self.game_scene:
             self.game_scene.component_is_ready()
-        self.current_player = 'x'
+            self.current_player = 'x'
 
     def check_end_game(self):
         g = self.grid
         n = len(g)
-        for x in range(n):
-            for y in range(n):
-                for z in range(n):
-                    if g[x][y][z] is None:
-                        continue
-                    neighbors = getNeighbor(g,x,y,z)
-                    #for item in neighbors:
-                    #neighbors[0] est le 1er voisin de la liste
-                    #neighbors[0][0] est la couleur
-                    while neighbors:
-                        if neighbors[0][0] == g[x][y][z]:
-                            for otherNeighbor in neighbors[1:]:
-                                if otherNeighbor[0] == g[x][y][z] \
-                                and isParallel(getVector(neighbors[0][1],(x,y,z)), getVector(otherNeighbor[1],(x,y,z))):
-                                    return g[x][y][z], ([x,y,z], neighbors[0][1], otherNeighbor[1])
-                        neighbors.pop(0)
+        for (x, y, z) in itertools.product(range(n), repeat=3):
+            if g[x][y][z] is None:
+                continue
+            neighbors = getNeighbor(g,x,y,z)
+            while neighbors:
+                if neighbors[0][0] == g[x][y][z]:
+                    for otherNeighbor in neighbors[1:]:
+                        if otherNeighbor[0] == g[x][y][z] \
+                        and isParallel(getVector(neighbors[0][1],(x,y,z)), getVector(otherNeighbor[1],(x,y,z))):
+                            return g[x][y][z], ((x,y,z), tuple(neighbors[0][1]), tuple(otherNeighbor[1]))
+                neighbors.pop(0)
+
+        if all(g[x][y][z] is not None for (x, y, z) in itertools.product(range(n), repeat=3)):
+            return 'NULL', []
+
         return None
-
-
-        # TODO Logic du jeu 3d
-        # On doit utiliser l'état du jeu stocké dans la matrice 3x3x3 g
-        # g[x][y][z] est un des éléments suivants:
-        #  * 'x': case occupée par le joueur X
-        #  * 'o': case occupée par le joueur O
-        #  * None: case libre
-        # Il faut retourner le couple (resultat, cases) où
-        #  * resultat: soit 'x', 'o', 'NULL' ou None pour (X a gagné, O a gagné, match nul, match non terminé)
-        #  * cases: si resultat est 'X' ou 'O', cases doit contenir un tableau des 3 points gagnants ((x1, y1, z1), (x2, y2, z2), (x3, y3, z3))
 
     def switch_player(self):
         if self.current_player == 'x':
@@ -91,6 +80,7 @@ class TicTacToe:
             self.game_scene.disable_actions = False
         match_ended = self._apply_move(box_id)
         if match_ended and self.game_scene:
+            if debug: print("Match ended {} {}".format(*match_ended))
             self.game_scene.game_over(match_ended)
 
     def on_select(self, box_id, debug=True):
@@ -99,7 +89,7 @@ class TicTacToe:
         if self.game_type == 'remote' and self.game_scene and self.remote_socket:
             self.game_scene.disable_actions = True
             self.remote_socket.send_move(box_id)
-        elif self.game_type == 'local' and self.game_scene and match_ended:
+        if self.game_scene and match_ended:
             if debug: print("Match ended {} {}".format(*match_ended))
             self.game_scene.game_over(match_ended)
         return match_ended

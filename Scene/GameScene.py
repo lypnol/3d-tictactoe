@@ -9,9 +9,10 @@ class GameScene(BaseScene):
     SPACING = 10
     BOX_SIZE = 4
 
-    def __init__(self, n, x_color, o_color):
+    def __init__(self, n, x_color, o_color, remote=True):
         BaseScene.__init__(self)
         self.n = n
+        self.remote = remote
         # couleurs
         self.x_color = hex_to_color_vector(x_color)
         self.o_color = hex_to_color_vector(o_color)
@@ -41,8 +42,8 @@ class GameScene(BaseScene):
     def wait_for_opponent(self):
         self.hide_restart()
         self.disable_actions = True
-        self.title.color = color.white
         self.title.text = 'Waiting for opponent...'
+        self.title.color = color.white
         self.title.visible = True
 
     def component_is_ready(self):
@@ -55,10 +56,10 @@ class GameScene(BaseScene):
     def init_objects(self):
         n = self.n
         self.title = label(pos=vector(0, 20, 0), xoffset=0, yoffset=0, text='Waiting for opponent...', align='center', color=color.white, opacity=0, line=False, height=25, box=False)
-        self.restart_button_local = box(pos=vector(-8, -15, 0), size=vector(15, 4, 2))
-        self.restart_button_remote = box(pos=vector(8, -15, 0), size=vector(15, 4, 2))
-        self.restart_label_local = label(pos=self.restart_button_local.pos, xoffset=0, yoffset=0, text='Restart Local', color=color.black, opacity=0, line=False, height=20, box=False)
-        self.restart_label_remote = label(pos=self.restart_button_remote.pos, xoffset=0, yoffset=0, text='Restart Remote', color=color.black, opacity=0, line=False, height=20, box=False)
+        self.restart_button_local = box(pos=vector(-8, -18, 0), size=vector(15, 4, 2))
+        self.restart_button_remote = box(pos=vector(8, -18, 0), size=vector(15, 4, 2))
+        self.restart_label_local = text(pos=vector(-8, -18, 1), align='center', text='Restart Local', color=color.black)
+        self.restart_label_remote = text(pos=vector(8, -18, 1), align='center', text='Restart Remote', color=color.black)
         for box_id in itertools.product([i for i in range(n)], repeat=3):
             self.boxes[box_id] = box(
                 pos=self.box_id_to_pos(box_id),
@@ -70,28 +71,35 @@ class GameScene(BaseScene):
         self.selected = set()
         for box_id, box in self.boxes.items():
             box.color = color.white
+            if self.curve: self.curve.visible = False
         if self.on_restart: self.on_restart(game_type)
 
     def draw_link(self, link):
         if self.curve is None:
             self.curve = curve([self.boxes[box_id].pos for box_id in link], color=self.current_color)
+        else:
+            self.curve.clear()
+            for box_id in link:
+                self.curve.append(self.boxes[box_id].pos)
+            self.curve.color = self.current_color
+            self.curve.visible = True
 
     def game_over(self, end_data):
         result, points = end_data
+        self.disable_actions = True
         if result == 'NULL':
             self.title.text = 'Draw'
             self.title.color = white.color
         else:
             self.title.text = 'Player wins'
-        # TODO Ce qu'on fait quand la partie est terminée
-        # end_data: est ce qui est retourné par TicTacToe.check_end_game quand result est different de None
+            self.draw_link(points)
         self.show_restart()
 
     def show_restart(self):
         self.restart_button_local.visible = True
-        self.restart_button_remote.visible = True
+        self.restart_button_remote.visible = self.remote
         self.restart_label_local.visible = True
-        self.restart_label_remote.visible = True
+        self.restart_label_remote.visible = self.remote
 
     def hide_restart(self):
         self.restart_button_local.visible = False
@@ -126,7 +134,7 @@ class GameScene(BaseScene):
         else:
             if obj == self.restart_button_local:
                 self.restart('local')
-            elif obj == self.restart_button_remote:
+            elif obj == self.restart_button_remote and self.remote:
                 self.restart('remote')
 
     def select_box(self, box_id):
