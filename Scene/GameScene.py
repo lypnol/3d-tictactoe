@@ -93,7 +93,7 @@ class GameScene(BaseScene):
             self.title.color = white.color
         else:
             self.title.text = 'Player wins'
-            self.draw_link(points)
+            self.draw_link(list(map(tuple, points)))
         self.show_restart()
 
     def show_restart(self):
