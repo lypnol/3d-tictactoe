@@ -89,7 +89,7 @@ class GameScene(BaseScene):
             pos_box2 = self.boxes[tuple(points[1])].pos
             pos_box3 = self.boxes[tuple(points[2])].pos
             #draw a line between those 3 boxes
-            self.curve = curve(box1, box2, box3, color=self.current_color)
+            self.curve = curve(pos_box1, pos_box2, pos_box3, color=self.current_color)
             #the player cannot interact with the cubes when the game is over
             self.disable_actions = True
         self.show_restart()
