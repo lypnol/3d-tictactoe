@@ -19,34 +19,49 @@ class TicTacToe:
         self.reset(game_type)
 
     def reset(self, game_type):
+        #defining the 3x3x3 grid representing the cubes
         self.grid = [[[None for z in range(self.n)] for y in range(self.n)] for x in range(self.n)]
         self.game_type = game_type
         if self.game_type == 'remote' and self.game_scene and self.remote_socket:
             self.game_scene.wait_for_opponent()
             self.remote_socket.find_game()
         elif self.game_type == 'local' and self.game_scene:
-            self.game_scene.component_is_ready()
-            self.current_player = 'x'
+            self.game_scene.opponent_is_ready()
+        self.current_player = 'x'
 
     def check_end_game(self):
+        """returns the id of the winning cubes and their color"""
         g = self.grid
         n = len(g)
-        for (x, y, z) in itertools.product(range(n), repeat=3):
-            if g[x][y][z] is None:
-                continue
-            neighbors = getNeighbor(g,x,y,z)
-            while neighbors:
-                if neighbors[0][0] == g[x][y][z]:
-                    for otherNeighbor in neighbors[1:]:
-                        if otherNeighbor[0] == g[x][y][z] \
-                        and isParallel(getVector(neighbors[0][1],(x,y,z)), getVector(otherNeighbor[1],(x,y,z))):
-                            return g[x][y][z], ((x,y,z), tuple(neighbors[0][1]), tuple(otherNeighbor[1]))
-                neighbors.pop(0)
-
-        if all(g[x][y][z] is not None for (x, y, z) in itertools.product(range(n), repeat=3)):
-            return 'NULL', []
-
+        for x in range(n):
+            for y in range(n):
+                for z in range(n):
+                    if g[x][y][z] is None:
+                        continue
+                    #get the immediate neighbors of the cube(x,y,z)
+                    neighbors = getNeighbor(g,x,y,z)
+                    while neighbors:
+                        #neighbors[0] is the first neighbor in the list
+                        #neighbors[0][0] is the color of this cube
+                        if neighbors[0][0] == g[x][y][z]:
+                            #if the two cubes have the same color, we check the next neighbors in the list
+                            for otherNeighbor in neighbors[1:]:
+                                #if we find a 3rd cube, aligned with the 2 others with the same color, return the result
+                                if otherNeighbor[0] == g[x][y][z] \
+                                and isParallel(getVector(neighbors[0][1],(x,y,z)), getVector(otherNeighbor[1],(x,y,z))):
+                                    return g[x][y][z], ([x,y,z], neighbors[0][1], otherNeighbor[1])
+                        #if no such 3rd cube is found, remove the neighbor from the list and test the next
+                        neighbors.pop(0)
         return None
+
+        # Further explanations:
+        # g[x][y][z] is either:
+        #  * 'x': box containing X
+        #  * 'o': box containing O
+        #  * None: free box
+        # check_end_game returns (result, boxes) where
+        #  * result: either 'x', 'o', 'NULL' or None corresponding to (X won, O won, draw, unfinished game)
+        #  * boxes: if result is 'X' or 'O', boxes contains a three element list ((x1, y1, z1), (x2, y2, z2), (x3, y3, z3))
 
     def switch_player(self):
         if self.current_player == 'x':
@@ -68,7 +83,7 @@ class TicTacToe:
         print("Started game as {}".format(current_player))
         self.current_player = current_player
         if self.game_scene:
-            self.game_scene.component_is_ready()
+            self.game_scene.opponent_is_ready()
             if self.current_player == 'o':
                 self.game_scene.disable_actions = True
                 self.game_scene.switch_colors()
@@ -92,6 +107,7 @@ class TicTacToe:
         if self.game_scene and match_ended:
             if debug: print("Match ended {} {}".format(*match_ended))
             self.game_scene.game_over(match_ended)
+            self.game_scene.disable_actions = True
         return match_ended
 
     def on_opponent_left(self):
