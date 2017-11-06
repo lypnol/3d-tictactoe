@@ -1,4 +1,3 @@
-#import itertools
 import sys
 
 from Scene.StartScene import StartScene
@@ -26,14 +25,14 @@ def main():
 
     remote_enabled = True if remote_socket is not None else False
 
-    start_scene = StartScene(remote=remote_enabled)
+    start_scene = StartScene(remote_enabled=remote_enabled)
     start_scene.show()
 
     #Wait for player's click, then hide welcome screen
     game_type = start_scene.wait_for_start()
     start_scene.hide()
 
-    game_scene = GameScene(N, X_COLOR, O_COLOR, remote=remote_enabled)
+    game_scene = GameScene(N, X_COLOR, O_COLOR, remote_enabled=remote_enabled)
     game_scene.show()
     tictactoe = TicTacToe(N, game_type=game_type, remote_socket=remote_socket, game_scene=game_scene)
 

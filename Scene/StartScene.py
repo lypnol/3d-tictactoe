@@ -5,13 +5,13 @@ from Scene.BaseScene import BaseScene
 
 
 class StartScene(BaseScene):
-    def __init__(self, remote=False):
+    def __init__(self, remote_enabled=False):
         BaseScene.__init__(self)
 
         #Disable rotation in the start scene
         self.scene.userspin = False
 
-        self.remote = remote
+        self.remote_enabled = remote_enabled
 
     def wait_for_start(self):
         """returns the game type (remote or local)"""
@@ -25,10 +25,10 @@ class StartScene(BaseScene):
         """define the elements on the screen"""
         self.start_button_local = box(pos=vector(0, 1.2, 0), size=vector(8, 2, 1))
         #if no IP address was defined, the button "remote game" will not appear
-        self.start_button_remote = None if not self.remote else box(pos=vector(0, -1.2, 0), size=vector(8, 2, 1))
+        self.start_button_remote = None if not self.remote_enabled else box(pos=vector(0, -1.2, 0), size=vector(8, 2, 1))
         #a label is a text associated to a box
         self.start_label_local = label(pos=self.start_button_local.pos, xoffset=0, yoffset=0, text='Local Game', color=color.black, opacity=0, line=False, height=20, box=False)
-        self.start_label_remote = None if not self.remote else label(pos=self.start_button_remote.pos, xoffset=0, yoffset=0, text='Remote Game', color=color.black, opacity=0, line=False, height=20, box=False)
+        self.start_label_remote = None if not self.remote_enabled else label(pos=self.start_button_remote.pos, xoffset=0, yoffset=0, text='Remote Game', color=color.black, opacity=0, line=False, height=20, box=False)
         self.title = text(pos=vector(0, 5, 0), text='Morpion 3D', align='center', color=color.green, billboard=True, depth=0.5)
         #return the list of elements that actually appear
         return filter(lambda x: x is not None, [self.start_button_local, self.start_button_remote, self.start_label_local, self.start_label_remote, self.title])
@@ -39,6 +39,6 @@ class StartScene(BaseScene):
         if obj == self.start_button_local:
             self.started = True
             return 'local'
-        elif obj == self.start_button_remote and self.remote:
+        elif obj == self.start_button_remote and self.remote_enabled:
             self.started = True
             return 'remote'

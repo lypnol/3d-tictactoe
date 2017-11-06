@@ -9,14 +9,15 @@ class GameScene(BaseScene):
     SPACING = 10
     BOX_SIZE = 4
 
-    def __init__(self, n, x_color, o_color, remote=True):
+    def __init__(self, n, x_color, o_color, remote_enabled=True):
         BaseScene.__init__(self)
         self.n = n
-        self.remote = remote
+        self.remote_enabled = remote_enabled
         # color conversion to vector
-        self.x_color = hex_to_color_vector(x_color)
-        self.o_color = hex_to_color_vector(o_color)
-        self.current_color = self.x_color
+        self.colors = {
+            'x': hex_to_color_vector(x_color),
+            'o': hex_to_color_vector(o_color)
+        }
         # click event
         self.scene.bind('click', self.on_click)
         self.disable_actions = False
@@ -40,19 +41,27 @@ class GameScene(BaseScene):
         x, y, z = map(lambda i: i * self.SPACING + pos_min, box_id)
         return vector(x, y, z)
 
-    def wait_for_opponent(self):
+    def searching_for_opponent(self):
         self.hide_restart()
         self.disable_actions = True
         self.title.text = 'Waiting for opponent...'
         self.title.color = color.white
         self.title.visible = True
 
-    def opponent_is_ready(self):
+    def start_new_game(self):
         self.hide_restart()
         self.disable_actions = False
-        self.title.text = 'Your turn'
-        self.title.color = self.x_color
         self.title.visible = True
+
+    def player_turn(self, player):
+        self.title.text = "Your turn"
+        self.title.color = self.colors[player]
+        self.disable_actions = False
+
+    def opponent_turn(self, player):
+        self.title.text = "Opponent's turn"
+        self.title.color = self.colors[player]
+        self.disable_actions = True
 
     def init_objects(self):
         n = self.n
@@ -75,32 +84,32 @@ class GameScene(BaseScene):
             if self.curve: self.curve.visible = False
         if self.on_restart: self.on_restart(game_type)
 
-    def draw_link(self, link):
+    def draw_link(self, link, player):
         if self.curve is None:
-            self.curve = curve([self.boxes[box_id].pos for box_id in link], color=self.current_color)
+            self.curve = curve([self.boxes[box_id].pos for box_id in link], color=self.colors[player])
         else:
             self.curve.clear()
             for box_id in link:
                 self.curve.append(self.boxes[box_id].pos)
-            self.curve.color = self.current_color
+            self.curve.color = self.colors[player]
             self.curve.visible = True
 
     def game_over(self, end_data):
-        result, points = end_data
+        winner, points = end_data
         self.disable_actions = True
-        if result == 'NULL':
+        if winner == 'NULL':
             self.title.text = 'Draw'
             self.title.color = white.color
         else:
             self.title.text = 'Player wins'
-            self.draw_link(list(map(tuple, points)))
+            self.draw_link(list(map(tuple, points)), winner)
         self.show_restart()
 
     def show_restart(self):
         self.restart_button_local.visible = True
-        self.restart_button_remote.visible = self.remote
+        self.restart_button_remote.visible = self.remote_enabled
         self.restart_label_local.visible = True
-        self.restart_label_remote.visible = self.remote
+        self.restart_label_remote.visible = self.remote_enabled
 
     def hide_restart(self):
         self.restart_button_local.visible = False
@@ -115,37 +124,26 @@ class GameScene(BaseScene):
         self.disable_actions = True
         self.show_restart()
 
-    def switch_colors(self):
-        if self.current_color == self.o_color:
-            self.current_color = self.x_color
-            self.title.text = 'Your turn'
-        else:
-            self.current_color = self.o_color
-            self.title.text = 'Opponent turn'
-        self.title.color = self.current_color
-
     def on_click(self, evt):
         obj = self.scene.mouse.pick
         if not self.disable_actions:
             for box_id, box in self.boxes.items():
                 if obj == box and box_id not in self.selected:
-                    box.color = self.current_color
-                    self.selected.add(box_id)
                     if self.on_select is not None: self.on_select(box_id)
                     break
         else:
             if obj == self.restart_button_local:
                 self.restart('local')
-            elif obj == self.restart_button_remote and self.remote:
+            elif obj == self.restart_button_remote and self.remote_enabled:
                 self.restart('remote')
             self.curve.clear()
 
-    def select_box(self, box_id):
+    def select_box(self, box_id, player):
         x, y, z = box_id
         if (x, y, z) not in self.boxes:
             return
         box = self.boxes[(x, y, z)]
-        box.color = self.current_color
+        box.color = self.colors[player]
         self.selected.add((x, y, z))
 
     def _get_on_select(self):
