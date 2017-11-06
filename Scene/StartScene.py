@@ -30,6 +30,6 @@ class StartScene(BaseScene):
         if obj == self.start_button_local:
             self.started = True
             return 'local'
-        elif obj == self.start_button_remote:
+        elif obj == self.start_button_remote and self.remote:
             self.started = True
             return 'remote'
