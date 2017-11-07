@@ -12,7 +12,7 @@ O_COLOR = '5fa0ba' #blue for the opponent
 N = 3 #cube dimension
 
 #If no IP is mentioned, launched on localhost
-SERVER_ADDR = 'localhost' if len(sys.argv) < 2 else str(sys.argv[1])
+SERVER_ADDR = 'littlefinger.crackthatcode.com' if len(sys.argv) < 2 else str(sys.argv[1])
 SERVER_PORT = 8080 if len(sys.argv) < 3 else int(sys.argv[2])
 
 def main():
