@@ -136,7 +136,7 @@ class GameScene(BaseScene):
                 self.restart('local')
             elif obj == self.restart_button_remote and self.remote_enabled:
                 self.restart('remote')
-            self.curve.clear()
+            if self.curve: self.curve.clear()
 
     def select_box(self, box_id, player):
         x, y, z = box_id
